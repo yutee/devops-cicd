@@ -1,0 +1,64 @@
+- name: Create the base application directory
+  file:
+    path: "/opt/monitoring-stack"
+    state: directory
+    mode: "0755"
+
+- name: Create the monitoring directory
+  file:
+    path: "/opt/monitoring-stack/monitoring"
+    state: directory
+    mode: "0755"
+
+- name: Create the monitoring data directory
+  file:
+    path: "/opt/monitoring-stack/monitoring/data"
+    state: directory
+    mode: "0777"
+
+- name: Copy monitoring docker-compose.yml
+  copy:
+    src: "../docker-compose/monitoring/docker-compose.yml"
+    dest: "/opt/monitoring-stack/monitoring/docker-compose.yml"
+    mode: "0644"
+
+- name: Copy prometheus.yml
+  copy:
+    src: "../docker-compose/monitoring/prometheus.yml"
+    dest: "/opt/monitoring-stack/monitoring/prometheus.yml"
+    mode: "0644"
+
+- name: Copy loki-config.yaml
+  copy:
+    src: "../docker-compose/monitoring/loki-config.yaml"
+    dest: "/opt/monitoring-stack/monitoring/loki-config.yaml"
+    mode: "0644"
+
+- name: Copy promtail-config.yml
+  copy:
+    src: "../docker-compose/monitoring/promtail-config.yaml"
+    dest: "/opt/monitoring-stack/monitoring/promtail-config.yaml"
+    mode: "0644"
+
+- name: Copy dashboard-providers.yml
+  copy:
+    src: "../docker-compose/monitoring/dashboard-providers.yml"
+    dest: "/opt/monitoring-stack/monitoring/dashboard-providers.yml"
+    mode: "0644"
+
+- name: Copy datasources.yml
+  copy:
+    src: "../docker-compose/monitoring/datasources.yml"
+    dest: "/opt/app/monitoring/datasources.yml"
+    mode: "0644"
+
+- name: Copy .env
+  copy:
+    src: "../docker-compose/monitoring/.env"
+    dest: "/opt/monitoring-stack/monitoring/.env"
+    mode: "0644"
+
+- name: Bring up the application stack
+  shell: docker-compose up -d
+  args:
+    chdir: /opt/monitoring-stack/monitoring

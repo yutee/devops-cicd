@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.external-url=/prometheus"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus-http.rule=((Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/prometheus`))"
+      - "traefik.http.routers.prometheus-http.entrypoints=web"
+      - "traefik.http.routers.prometheus-https.middlewares=www-to-non-www"
+      - "traefik.http.routers.prometheus-https.rule=((Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/prometheus`))"
+      - "traefik.http.routers.prometheus-https.entrypoints=websecure"
+      - "traefik.http.routers.prometheus-https.tls.certresolver=myresolver"
+      - "traefik.http.routers.prometheus-https.service=prometheus"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    ports:
+      - "9090:9090"
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_ROOT_URL=http://${DOMAIN}/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana-http.rule=((Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/grafana`))"
+      - "traefik.http.routers.grafana-http.entrypoints=web"
+      - "traefik.http.routers.grafana-https.middlewares=www-to-non-www"
+      - "traefik.http.routers.grafana-https.rule=((Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/grafana`))"
+      - "traefik.http.routers.grafana-https.entrypoints=websecure"
+      - "traefik.http.routers.grafana-https.tls.certresolver=myresolver"
+      - "traefik.http.routers.grafana-https.service=grafana"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./datasources.yml:/etc/grafana/provisioning/datasources/prometheus-datasource.yml
+      - ./dashboard-providers.yml:/etc/grafana/provisioning/dashboards/dashboard-providers.yml
+      - ./dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    command: -config.file=/mnt/config/loki-config.yaml
+    user: "10001:10001"
+    volumes:
+      - ./loki-config.yaml:/mnt/config/loki-config.yaml
+      - ./data:/mnt/data
+    ports:
+      - "3100:3100"
+    networks:
+      - app-network
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    command: -config.file=/mnt/config/promtail-config.yaml
+    volumes:
+      - ./promtail-config.yaml:/mnt/config/promtail-config.yaml
+      - /var/log:/var/log
+    networks:
+      - app-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    command:
+      - --docker_only=true
+      - --store_container_labels=true
+    ports:
+      - "8085:8080"
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+

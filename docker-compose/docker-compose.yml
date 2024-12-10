@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+
+  prometheus:
+    extends:
+      file: ./monitoring/docker-compose.yml
+      service: prometheus
+
+  grafana:
+    extends:
+      file: ./monitoring/docker-compose.yml
+      service: grafana
+
+  loki:
+    extends:
+      file: ./monitoring/docker-compose.yml
+      service: loki
+
+  promtail:
+    extends:
+      file: ./monitoring/docker-compose.yml
+      service: promtail
+
+  cadvisor:
+    extends:
+      file: ./monitoring/docker-compose.yml
+      service: cadvisor
+
+  reverse-proxy:
+    image: traefik:v3.0
+    command:
+      - "--log.level=ERROR"
+      - "--accesslog=true"
+      - "--api"
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker=true"
+      - "--certificatesresolvers.letsencryptresolver.acme.tlschallenge=true"
+      - "--configFile=/etc/traefik/traefik.yml"
+    labels:
+      - "traefik.enable=true"
+      # HTTP Router
+      - "traefik.http.routers.traefik-http.rule=Host(`traefik.${DOMAIN}`) || Host(`traefik.www.${DOMAIN}`)"
+      - "traefik.http.routers.traefik-http.entrypoints=web"
+      - "traefik.http.services.traefik-http.loadbalancer.server.port=8080"
+      # www to non-www redirect
+      - "traefik.http.routers.traefik-https.middlewares=www-to-non-www"
+      # HTTP to HTTPS redirect
+      - "traefik.http.middlewares.www-to-non-www.redirectregex.regex=^https?://www\\.(.+)"
+      - "traefik.http.middlewares.www-to-non-www.redirectregex.replacement=https://$$1"
+      - "traefik.http.middlewares.www-to-non-www.redirectregex.permanent=true"
+      # HTTPS Router
+      - "traefik.http.routers.traefik-https.rule=Host(`traefik.${DOMAIN}`) || Host(`www.traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik-https.entrypoints=websecure"
+      - "traefik.http.routers.traefik-https.service=api@internal"
+      - "traefik.http.routers.traefik-https.tls.certresolver=myresolver"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yml:/etc/traefik/traefik.yml
+      - ./acme.json:/acme.json
+    networks:
+      - app-network
+        
+  frontend:
+    image: utibeokon/frontend:latest
+    container_name: frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend-http.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`))"
+      - "traefik.http.routers.frontend-http.entrypoints=web"
+      - "traefik.http.routers.frontend-https.middlewares=www-to-non-www"
+      - "traefik.http.routers.frontend-https.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`))"
+      - "traefik.http.routers.frontend-https.entrypoints=websecure"
+      - "traefik.http.routers.frontend-https.tls.certresolver=myresolver"
+      - "traefik.http.routers.frontend-https.service=frontend"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      
+    environment:
+      - VITE_API_URL=https://${DOMAIN}/api
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+  backend:
+    image: utibeokon/backend:latest
+    container_name: backend
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.backend-http.rule=((Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && (PathPrefix(`/api`) || PathPrefix(`/redoc`) || PathPrefix(`/docs`)))"
+      - "traefik.http.routers.backend-http.entrypoints=web"
+      - "traefik.http.routers.backend-https.middlewares=www-to-non-www"
+      - "traefik.http.routers.backend-https.rule=(Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/redoc`) || PathPrefix(`/docs`)))"
+      - "traefik.http.routers.backend-https.entrypoints=websecure"
+      - "traefik.http.routers.backend-https.tls.certresolver=myresolver"
+      - "traefik.http.services.backend-http.loadbalancer.server.port=8000"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydb
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=5432
+      # Both formats of database URL for flexibility
+      - DATABASE_URL=postgresql://user:password@database:5432/mydb
+      - SQLALCHEMY_DATABASE_URL=postgresql://user:password@database:5432/mydb
+    networks:
+      - app-network
+    depends_on:
+      database:
+        condition: service_healthy  # wait for database to be really ready
+
+  database:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "5432:5432"  # exposed for local development
+
+  adminer:
+    image: adminer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adminer.rule=Host(`db.${DOMAIN}`) || (Host(`${DOMAIN}`) && PathPrefix(`/db`))"
+      - "traefik.http.middlewares.adminer-strip.stripprefix.prefixes=/db"
+      - "traefik.http.routers.adminer.middlewares=adminer-strip"
+      - "traefik.http.routers.adminer.entrypoints=websecure"
+      - "traefik.http.routers.adminer.tls=true"
+      - "traefik.http.routers.adminer.tls.certresolver=myresolver"
+      - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+    networks:
+      - app-network
+    depends_on:
+      - database
+        
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  database_data:
+  grafana:

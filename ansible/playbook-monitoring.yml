@@ -1,0 +1,9 @@
+
+- name: Deploy Docker-based monitoring stack on server
+  hosts: servers
+  become: yes
+  become_user: root
+  gather_facts: yes
+  roles:
+    - server-setup
+    - deploy-monitoring
