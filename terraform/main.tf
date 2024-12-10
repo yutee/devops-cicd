@@ -31,27 +31,27 @@ EOT
   filename = "../ansible/inventory.ini"
 }
 
-# trigger the vm configuration with ansible
-resource "null_resource" "ansible_provisioner" {
-  depends_on = [
-    local_file.inventory,
-    module.vm,
-    module.network
-  ]
+# trigger the vm configuration with ansible - not needed in ci/cd pipeline use case - a pipeline job will be used to run ansible to bring up the monitoring stack
+# resource "null_resource" "ansible_provisioner" {
+#   depends_on = [
+#     local_file.inventory,
+#     module.vm,
+#     module.network
+#   ]
 
-  triggers = {
-    always_run = timestamp()
-  }
+#   triggers = {
+#     always_run = timestamp()
+#   }
 
-  provisioner "local-exec" {
-    command = <<-EOT
-      sleep 60 # allow time for public ip to update
-      ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-        -i ../ansible/inventory.ini \
-        ../ansible/playbook-monitoring.yml
-    EOT
-  }
-}
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       sleep 60 # allow time for public ip to update
+#       ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+#         -i ../ansible/inventory.ini \
+#         ../ansible/monitoring.yml
+#     EOT
+#   }
+# }
 
 # dns record for the server
 # dns zone (slready created manually)

@@ -1,0 +1,47 @@
+# name: Terraform Plan
+
+# on:
+#   pull_request:
+#     branches:
+#       - infra_main
+
+# jobs:
+#   plan:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       - name: Set up Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.5.0
+
+#       - name: Initialize Terraform
+#         run: terraform init
+#         working-directory: ./terraform
+
+#       - name: Generate Terraform plan
+#         id: terraform_plan
+#         run: terraform plan -out=tfplan
+#         working-directory: ./terraform
+
+#       - name: Show Terraform plan
+#         run: terraform show -json tfplan > plan.json
+#         working-directory: ./terraform
+
+#       - name: Run InfraCost
+#         uses: infracost/infracost-gh-action@v2
+#         with:
+#           path: ./terraform/plan.json
+#           post_condition: always
+
+#       - name: Post Terraform plan as PR comment
+#         uses: marocchino/sticky-pull-request-comment@v3
+#         with:
+#           message: |
+#             ## Terraform Plan
+#             ```
+#             ${{ steps.terraform_plan.outputs.stdout }}
+#             ```
