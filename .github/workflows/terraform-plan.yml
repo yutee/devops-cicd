@@ -1,0 +1,42 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - infra_main
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Generate Terraform plan
+        id: terraform_plan
+        working-directory: ./terraform
+        run: |
+              terraform plan -detailed-exitcode -out=plan.tfplan \
+              -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+              -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+              -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+              -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+
+      - name: Show Terraform plan
+        run: terraform show -json tfplan > plan.json
+        working-directory: ./terraform
