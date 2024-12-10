@@ -7,7 +7,7 @@
   
 # jobs:
 #   pr-merge:
-#       if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}
+#       if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'infra_main' }}
 #       runs-on: ubuntu-latest
 
 #   apply:
