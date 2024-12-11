@@ -6,6 +6,8 @@ on:
       - Terraform Apply
     types:
       - completed
+    branches:
+      - infra_main
 
 jobs:
   deploy:
