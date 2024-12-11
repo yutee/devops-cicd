@@ -21,43 +21,8 @@ module "vm" {
   subnet_id           = module.network.subnet_id
 }
 
-<<<<<<< HEAD
-# dynamically create an inventory file for ansible
-resource "local_file" "inventory" {
-  content = <<EOT
-[servers]
-${module.vm.public_ip} ansible_user=${var.admin_username} ansible_ssh_private_key_file=~/.ssh/id_rsa
-EOT
-
-  filename = "../ansible/inventory.ini"
-}
-
-# trigger the vm configuration with ansible - not needed in ci/cd pipeline use case - a pipeline job will be used to run ansible to bring up the monitoring stack
-# resource "null_resource" "ansible_provisioner" {
-#   depends_on = [
-#     local_file.inventory,
-#     module.vm,
-#     module.network
-#   ]
-
-#   triggers = {
-#     always_run = timestamp()
-#   }
-
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       sleep 60 # allow time for public ip to update
-#       ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
-#         -i ../ansible/inventory.ini \
-#         ../ansible/monitoring.yml
-#     EOT
-#   }
-# }
-
-=======
->>>>>>> infra_features
 # dns record for the server
-# dns zone (slready created manually)
+# dns zone (already created manually)
 data "azurerm_dns_zone" "domain" {
   name                = var.domain_name
   resource_group_name = var.resource_group_name
