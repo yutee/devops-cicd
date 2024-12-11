@@ -40,5 +40,5 @@ jobs:
               -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
 
       - name: Show Terraform plan
-        run: terraform show -json tfplan > plan.json
+        run: terraform show -json plan.tfplan > plan.json
         working-directory: ./terraform
