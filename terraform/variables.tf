@@ -19,7 +19,6 @@ variable "admin_username" {
 variable "ssh_key_path" {
   description = "The path to the SSH public key used to access the virtual machine."
   type        = string
-  default     = "~/.ssh/id_rsa.pub"
 }
 
 variable "domain_name" {
