@@ -18,3 +18,8 @@ terraform/.terraform.lock.hcl
 # ignore logs and temporary files
 terraform/*.log
 terraform/*.swp
+
+.github/workflows/ansible-monitoring.yml
+.github/workflows/terraform-apply.yml
+.github/workflows/cd-application.yml
+.github/workflows/cd-application.yml
