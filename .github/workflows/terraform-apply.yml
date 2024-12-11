@@ -1,31 +1,51 @@
-# name: Terraform Apply
 
-# on:
-#     pull_request:
-#       types:
-#         - closed
-  
-# jobs:
-#   pr-merge:
-#       if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'infra_main' }}
-#       runs-on: ubuntu-latest
+name: Terraform Apply
 
-#   apply:
-#     runs-on: ubuntu-latest
+on:
+  push:
+    branches:
+      - infra_main
 
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-#       - name: Set up Terraform
-#         uses: hashicorp/setup-terraform@v2
-#         with:
-#           terraform_version: 1.5.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-#       - name: Initialize Terraform
-#         run: terraform init
-#         working-directory: ./terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-#       - name: Apply Terraform configuration
-#         run: terraform apply -auto-approve
-#         working-directory: ./terraform
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Apply Terraform configuration
+        working-directory: ./terraform
+        env:
+          TF_VAR_ssh_key_path: ${{ secrets.SSH_PUBLIC_KEY }}
+        run: |
+            terraform apply -auto-approve \
+            -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+
+      - name: Save Ansible Inventory
+        working-directory: ./terraform
+        run: |
+            terraform output -raw ansible_inventory > inventory.ini
+    
+      - name: Upload Inventory as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+              name: inventory-file
+              path: ./terraform/inventory.ini

@@ -7,7 +7,7 @@ terraform/terraform.tfstate.backup
 terraform/terraform.tfstate.backup.*
 
 # ignore terraform variables file
-terraform/terraform.tfvars
+terraform/terraform.tfvar
 
 # ignore terraform plugin directory
 terraform/.terraform/

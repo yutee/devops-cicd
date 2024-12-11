@@ -17,10 +17,11 @@ module "vm" {
   vm_name             = "server"
   vm_size             = "Standard_B2s"
   admin_username      = var.admin_username
-  ssh_public_key      = file(var.ssh_key_path)
+  ssh_public_key      = var.ssh_key_path
   subnet_id           = module.network.subnet_id
 }
 
+<<<<<<< HEAD
 # dynamically create an inventory file for ansible
 resource "local_file" "inventory" {
   content = <<EOT
@@ -53,6 +54,8 @@ EOT
 #   }
 # }
 
+=======
+>>>>>>> infra_features
 # dns record for the server
 # dns zone (slready created manually)
 data "azurerm_dns_zone" "domain" {
