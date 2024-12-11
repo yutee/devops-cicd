@@ -37,3 +37,14 @@ jobs:
             -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
             -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
             -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+
+      - name: Save Ansible Inventory
+        working-directory: ./terraform
+        run: |
+            terraform output -raw ansible_inventory > ../ansible/inventory.ini
+    
+      - name: Upload Inventory as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+            name: inventory-file
+            path: ../ansible/inventory.ini 
