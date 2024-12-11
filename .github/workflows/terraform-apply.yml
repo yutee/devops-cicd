@@ -47,5 +47,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
               name: inventory-file
-              path: ./terraform/inventory.ini          
+              path: ./terraform/inventory.ini
           
