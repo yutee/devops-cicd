@@ -41,10 +41,11 @@ jobs:
       - name: Save Ansible Inventory
         working-directory: ./terraform
         run: |
-            terraform output -raw ansible_inventory > ../ansible/inventory.ini
+            terraform output -raw ansible_inventory > inventory.ini
     
       - name: Upload Inventory as Artifact
         uses: actions/upload-artifact@v3
         with:
-            name: inventory-file
-            path: ../ansible/inventory.ini 
+              name: inventory-file
+              path: ./terraform/ansible_inventory.ini          
+          
