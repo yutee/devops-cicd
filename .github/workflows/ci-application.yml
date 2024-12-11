@@ -1,0 +1,17 @@
+name: Placeholders for GitHub Actions Workflows
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Placeholder job
+        run: echo "Success"

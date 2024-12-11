@@ -5,6 +5,10 @@ on:
     branches:
       - infra_main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -30,6 +34,8 @@ jobs:
       - name: Generate Terraform plan
         id: terraform_plan
         working-directory: ./terraform
+        env:
+          TF_VAR_ssh_key_path: ${{ secrets.SSH_PUBLIC_KEY }}
         run: |
               terraform plan -detailed-exitcode -out=plan.tfplan \
               -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
@@ -38,5 +44,39 @@ jobs:
               -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
 
       - name: Show Terraform plan
-        run: terraform show -json tfplan > plan.json
+        run: terraform show -json plan.tfplan > plan.json
         working-directory: ./terraform
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.pull_request.base.ref }}'
+
+      - name: Generate Infracost cost estimate baseline
+        run: |
+            infracost breakdown --path=. \
+                                --format=json \
+                                --out-file=/tmp/infracost-base.json
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Generate Infracost diff
+        run: |
+          infracost diff --path=. \
+                          --format=json \
+                          --compare-to=/tmp/infracost-base.json \
+                          --out-file=/tmp/infracost.json
+
+      - name: Post Infracost comment
+        run: |
+          infracost comment github --path=/tmp/infracost.json \
+                                   --repo=$GITHUB_REPOSITORY \
+                                   --github-token=${{ github.token }} \
+                                   --pull-request=${{ github.event.pull_request.number }} \
+                                   --behavior=update
