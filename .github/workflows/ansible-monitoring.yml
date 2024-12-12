@@ -24,17 +24,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: List Available Artifacts
-        run: |
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.artifacts[] | .name'
-      
-
-      - name: Download Terraform Output Artifact
-        uses: actions/download-artifact@v3
+      - name: Download Inventory from Azure Blob
+        uses: azure/CLI@v1
         with:
-          name: inventory-file
-          path: ./terraform
+          inlineScript: |
+            az storage blob download \
+              --container-name pipeline-files \
+              --name inventory.ini \
+              --file ./ansible/inventory.ini \
+              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
+              --account-key ${{ secrets.AZURE_STORAGE_KEY }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -53,4 +52,4 @@ jobs:
           chmod 600 ~/.ssh/id_rsa          
 
       - name: Run Ansible Playbook
-        run: ansible-playbook -i ./terraform/inventory.ini ./ansible/playbook-monitoring.yml
+        run: ansible-playbook -i ./ansible/inventory.ini ./ansible/playbook-monitoring.yml
