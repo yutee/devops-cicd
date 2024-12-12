@@ -17,18 +17,23 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Debugging workflow status
+      - name: Debugging workflow statu
         run: |
           echo "Workflow status: ${{ github.event.workflow_run.conclusion }}"
 
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: List Available Artifacts
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.artifacts[] | .name'
+
       - name: Download Terraform Output Artifact
         uses: actions/download-artifact@v3
         with:
           name: inventory-file
-          path: ./terraform/inventory.ini
+          path: ./terraform
 
       - name: Set up Python
         uses: actions/setup-python@v4
