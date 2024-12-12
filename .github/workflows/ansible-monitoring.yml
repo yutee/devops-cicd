@@ -33,12 +33,13 @@ jobs:
               --name inventory.ini \
               --file ./ansible/inventory.ini \
               --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
-              --account-key ${{ secrets.AZURE_STORAGE_KEY }}
+              --account-key ${{ secrets.AZURE_STORAGE_KEY }} \
+              --overwrite
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.13'
 
       - name: Install Ansible
         run: |
