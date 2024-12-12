@@ -17,7 +17,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Debugging workflow status
+      - name: Debugging workflow statu
         run: |
           echo "Workflow status: ${{ github.event.workflow_run.conclusion }}"
 
