@@ -49,7 +49,7 @@ jobs:
         with:
           inlineScript: |
                 az storage blob upload \
-                  --container-name terrafromstate737 \
+                  --container-name pipeline-files \
                   --file ./terraform/inventory.ini \
                   --name inventory.ini \
                   --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
