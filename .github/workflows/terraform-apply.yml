@@ -53,4 +53,5 @@ jobs:
                   --file ./terraform/inventory.ini \
                   --name inventory.ini \
                   --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
-                  --account-key ${{ secrets.AZURE_STORAGE_KEY }}          
+                  --account-key ${{ secrets.AZURE_STORAGE_KEY }} \
+                  --overwrite        
