@@ -22,7 +22,7 @@ module "vm" {
 }
 
 # dns record for the server
-# dns zone (already created manually)
+# dns zone (slready created manually)
 data "azurerm_dns_zone" "domain" {
   name                = var.domain_name
   resource_group_name = var.resource_group_name
