@@ -44,8 +44,13 @@ jobs:
         run: |
             terraform output -raw ansible_inventory > inventory.ini
     
-      - name: Upload Inventory as Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Inventory to Azure Blob
+        uses: azure/CLI@v1
         with:
-              name: inventory-file
-              path: ./terraform/inventory.ini
+          inlineScript: |
+                az storage blob upload \
+                  --container-name terrafromstate737 \
+                  --file ./terraform/inventory.ini \
+                  --name inventory.ini \
+                  --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
+                  --account-key ${{ secrets.AZURE_STORAGE_KEY }}          
