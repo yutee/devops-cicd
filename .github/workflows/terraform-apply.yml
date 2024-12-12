@@ -42,7 +42,7 @@ jobs:
       - name: Save Ansible Inventory
         working-directory: ./terraform
         run: |
-            terraform output -raw ansible_inventory > inventory.ini
+            terraform output -raw ansible_inventory | sed '/^[[:space:]]*$/d' > inventory.ini
     
       - name: Upload Inventory to Azure Blob
         uses: azure/CLI@v1
