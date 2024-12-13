@@ -49,7 +49,7 @@
 - name: Copy datasources.yml
   copy:
     src: "../docker-compose/monitoring/datasources.yml"
-    dest: "/opt/app/monitoring/datasources.yml"
+    dest: "/opt/monitoring-stack/datasources.yml"
     mode: "0644"
 
 - name: Copy .env
