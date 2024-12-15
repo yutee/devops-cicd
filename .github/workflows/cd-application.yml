@@ -3,7 +3,7 @@ name: Placeholders for GitHub Actions Workflows
 on:
   push:
     branches:
-      - main
+      - deployment
 
 jobs:
   build:
