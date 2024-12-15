@@ -3,15 +3,45 @@ name: Placeholders for GitHub Actions Workflows
 on:
   push:
     branches:
-      - main
+      - deployment
 
 jobs:
-  build:
+  deploy-application-stack:
     runs-on: ubuntu-latest
-
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          ref: deployment
 
-      - name: Placeholder job
-        run: echo "Success"
+      - name: Download Inventory from Azure Blob
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az storage blob download \
+              --container-name pipeline-files \
+              --name inventory.ini \
+              --file ./ansible/inventory.ini \
+              --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT }} \
+              --account-key ${{ secrets.AZURE_STORAGE_KEY }} \
+              --overwrite
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+        
+      - name: Set up SSH private key for Ansible
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa          
+
+      - name: Run Ansible Playbook
+        run: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./ansible/inventory.ini ./ansible/playbook.yml

@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build-images:
+  build-and-push-images:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,44 +32,25 @@ jobs:
         run: |
           echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Build and tag Frontend Docker image
+      - name: Build, tag, and push Frontend Docker image
         run: |
           docker build -t utibeokon/frontend:latest ./app/frontend
           docker tag utibeokon/frontend:latest utibeokon/frontend:${{ env.SHA_SHORT }}
+          docker push utibeokon/frontend:latest
+          docker push utibeokon/frontend:${{ env.SHA_SHORT }}
 
-      - name: Build and tag Backend Docker image
+      - name: Build, tag, and push Backend Docker image
         run: |
           docker build -t utibeokon/backend:latest ./app/backend
           docker tag utibeokon/backend:latest utibeokon/backend:${{ env.SHA_SHORT }}
+          docker push utibeokon/backend:latest
+          docker push utibeokon/backend:${{ env.SHA_SHORT }}
 
     outputs:
       sha_short: ${{ env.SHA_SHORT }}
 
-  push-images:
-    needs: build-images
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Push Frontend Docker image
-        run: |
-          docker push utibeokon/frontend:latest
-          docker push utibeokon/frontend:${{ needs.build-images.outputs.sha_short }}
-
-      - name: Push Backend Docker image
-        run: |
-          docker push utibeokon/backend:latest
-          docker push utibeokon/backend:${{ needs.build-images.outputs.sha_short }}
-
   update-compose-file:
-    needs:
-      - build-images
-      - push-images
+    needs: build-and-push-images
     runs-on: ubuntu-latest
 
     steps:
@@ -80,13 +61,13 @@ jobs:
 
       - name: Update docker-compose.yml with new image tags
         run: |
-          sed -i "s|image: utibeokon/frontend:.*$|image: utibeokon/frontend:${{ needs.build-images.outputs.sha_short }}|" docker-compose/docker-compose.yml
-          sed -i "s|image: utibeokon/backend:.*$|image: utibeokon/backend:${{ needs.build-images.outputs.sha_short }}|" docker-compose/docker-compose.yml
+          sed -i "s|image: utibeokon/frontend:.*$|image: utibeokon/frontend:${{ needs.build-and-push-images.outputs.sha_short }}|" docker-compose/docker-compose.yml
+          sed -i "s|image: utibeokon/backend:.*$|image: utibeokon/backend:${{ needs.build-and-push-images.outputs.sha_short }}|" docker-compose/docker-compose.yml
 
       - name: Commit and push updated docker-compose.yml
         run: |
           git config --global user.name "yutee"
           git config --global user.email "yuteenightxi@gmail.com"
           git add docker-compose/docker-compose.yml
-          git commit -m "Update docker-compose.yml with image tags ${{ needs.build-images.outputs.sha_short }}"
+          git commit -m "Update docker-compose.yml with image tags ${{ needs.build-and-push-images.outputs.sha_short }}"
           git push origin integration
