@@ -100,6 +100,8 @@ services:
 networks:
   app-network:
     driver: bridge
+volumes:
+  grafana:
 
 volumes:
   grafana:
