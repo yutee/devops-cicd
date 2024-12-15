@@ -1,0 +1,24 @@
+
+- name: Create the base application directory
+  file:
+    path: "/opt/app"
+    state: directory
+    mode: "0755"
+
+- name: Copy docker-compose.yml
+  copy:
+    src: "../docker-compose/docker-compose.yml"
+    dest: "/opt/app/docker-compose.yml"
+    mode: "0644"
+
+- name: Copy traefik.yml
+  copy:
+    src: "../docker-compose/traefik.yml"
+    dest: "/opt/app/traefik.yml"
+    mode: "0644"
+
+- name: Copy environment file
+  copy:
+    src: "../docker-compose/.env"
+    dest: "/opt/app/.env"
+    mode: "0644"

@@ -58,7 +58,7 @@
     dest: "/opt/monitoring-stack/monitoring/.env"
     mode: "0644"
 
-- name: Bring up the application stack
+- name: Bring up the monitoring stack
   shell: docker-compose up -d
   args:
     chdir: /opt/monitoring-stack/monitoring
