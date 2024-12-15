@@ -2,31 +2,6 @@ version: '3.8'
 
 services:
 
-  prometheus:
-    extends:
-      file: ./monitoring/docker-compose.yml
-      service: prometheus
-
-  grafana:
-    extends:
-      file: ./monitoring/docker-compose.yml
-      service: grafana
-
-  loki:
-    extends:
-      file: ./monitoring/docker-compose.yml
-      service: loki
-
-  promtail:
-    extends:
-      file: ./monitoring/docker-compose.yml
-      service: promtail
-
-  cadvisor:
-    extends:
-      file: ./monitoring/docker-compose.yml
-      service: cadvisor
-
   reverse-proxy:
     image: traefik:v3.0
     command:
@@ -159,4 +134,5 @@ networks:
 
 volumes:
   database_data:
-  grafana:
+
+

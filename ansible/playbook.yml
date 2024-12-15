@@ -6,5 +6,5 @@
   gather_facts: yes
   roles:
     - server-setup
-    - copy-files
+    - copy-app-files
     - deploy-app
