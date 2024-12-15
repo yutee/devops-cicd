@@ -103,3 +103,6 @@ networks:
 volumes:
   grafana:
 
+volumes:
+  grafana:
+
