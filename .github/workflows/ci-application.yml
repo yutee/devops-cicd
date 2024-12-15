@@ -5,6 +5,9 @@ on:
     branches:
       - integration
 
+permissions:
+  contents: write
+
 jobs:
   build-images:
     runs-on: ubuntu-latest
