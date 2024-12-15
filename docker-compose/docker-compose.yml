@@ -46,7 +46,7 @@ services:
       - app-network
         
   frontend:
-    image: utibeokon/frontend:bbceac3
+    image: utibeokon/frontend:ba56a7f
     container_name: frontend
     labels:
       - "traefik.enable=true"
@@ -67,7 +67,7 @@ services:
       - backend
 
   backend:
-    image: utibeokon/backend:bbceac3
+    image: utibeokon/backend:ba56a7f
     container_name: backend
     labels:
       - traefik.enable=true
